@@ -19,6 +19,12 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { EscrowModule } from './modules/escrow/escrow.module';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { StellarEventModule } from './modules/stellar/stellar-event.module';
+import { Notification } from './notifications/entities/notification.entity';
+import { NotificationPreference } from './notifications/entities/notification-preference.entity';
+import { ApiKey } from './api-key/entities/api-key.entity';
+import { AdminAuditLog } from './modules/admin/entities/admin-audit-log.entity';
+import { Webhook } from './modules/webhook/webhook.entity';
+import { StellarEvent } from './modules/stellar/entities/stellar-event.entity';
 
 @Module({
   imports: [
@@ -33,8 +39,24 @@ import { StellarEventModule } from './modules/stellar/stellar-event.module';
           'DATABASE_PATH',
           './data/vaultix.db',
         ),
-        entities: [User, RefreshToken, Escrow, Party, Condition, EscrowEvent, Dispute],
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        entities: [
+          User,
+          RefreshToken,
+          Escrow,
+          Party,
+          Condition,
+          EscrowEvent,
+          Dispute,
+          Notification,
+          NotificationPreference,
+          ApiKey,
+          AdminAuditLog,
+          Webhook,
+          StellarEvent,
+        ],
+        synchronize: false,
+        migrations: [__dirname + '/migrations/*.ts'],
+        migrationsRun: true,
       }),
       inject: [ConfigService],
     }),
