@@ -1,4 +1,6 @@
 import { Linter } from "eslint";
+import typescriptPlugin from "@typescript-eslint/eslint-plugin";
+import prettierPlugin from "eslint-plugin-prettier";
 
 /** @type {Linter.Config[]} */
 const config = [
@@ -14,8 +16,8 @@ const config = [
       es6: true,
     },
     plugins: {
-      "@typescript-eslint": require("@typescript-eslint/eslint-plugin"),
-      prettier: require("eslint-plugin-prettier"),
+      "@typescript-eslint": typescriptPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       // Add your custom rules here
