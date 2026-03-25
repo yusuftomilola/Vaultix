@@ -13,7 +13,6 @@ import { EscrowSchedulerController } from './controllers/escrow-scheduler.contro
 import { EventsController } from './controllers/events.controller';
 import { EscrowAccessGuard } from './guards/escrow-access.guard';
 import { AuthModule } from '../auth/auth.module';
-import { StellarModule } from '../stellar/stellar.module';
 import { EscrowStellarIntegrationService } from './services/escrow-stellar-integration.service';
 import { WebhookModule } from '../webhook/webhook.module';
 
@@ -22,7 +21,6 @@ import { WebhookModule } from '../webhook/webhook.module';
     ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([Escrow, Party, Condition, EscrowEvent, Dispute]),
     AuthModule,
-    StellarModule,
     WebhookModule,
   ],
   controllers: [EscrowController, EscrowSchedulerController, EventsController],

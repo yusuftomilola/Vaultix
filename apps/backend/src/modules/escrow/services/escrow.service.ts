@@ -35,6 +35,7 @@ import { FulfillConditionDto } from '../dto/fulfill-condition.dto';
 import { FileDisputeDto, ResolveDisputeDto } from '../dto/dispute.dto';
 import { FundEscrowDto } from '../dto/fund-escrow.dto';
 import { ExpireEscrowDto } from '../dto/expire-escrow.dto';
+import { ProposeMilestoneChangeDto } from '../dto/milestone-change.dto';
 import { validateTransition, isTerminalStatus } from '../escrow-state-machine';
 import { EscrowStellarIntegrationService } from './escrow-stellar-integration.service';
 import { WebhookService } from '../../../services/webhook/webhook.service';
@@ -1028,6 +1029,96 @@ export class EscrowService {
       where: { id: resolved.id },
       relations: ['filedBy', 'resolvedBy'],
     }) as Promise<Dispute>;
+  }
+
+  async proposeMilestoneChange(
+    escrowId: string,
+    conditionId: string,
+    dto: ProposeMilestoneChangeDto,
+    userId: string,
+  ): Promise<Condition> {
+    const escrow = await this.escrowRepository.findOne({
+      where: { id: escrowId },
+      relations: ['conditions', 'parties'],
+    });
+
+    if (!escrow) throw new NotFoundException('Escrow not found');
+    
+    if (escrow.status !== EscrowStatus.ACTIVE) {
+      throw new BadRequestException('Milestones can only be changed when the escrow is ACTIVE');
+    }
+
+    const isBuyer = escrow.creatorId === userId || escrow.parties.some(p => p.userId === userId && p.role === PartyRole.BUYER);
+    const isSeller = escrow.parties.some(p => p.userId === userId && p.role === PartyRole.SELLER);
+    if (!isBuyer && !isSeller) {
+      throw new ForbiddenException('Only the buyer or seller can propose milestone changes');
+    }
+
+    const condition = escrow.conditions.find((c) => c.id === conditionId);
+    if (!condition) throw new NotFoundException('Condition not found');
+
+    if (condition.isFulfilled || condition.isMet) {
+      throw new BadRequestException('Cannot change a milestone that is already fulfilled or met');
+    }
+
+    if (dto.amount === undefined && dto.description === undefined) {
+      throw new BadRequestException('Must propose at least one change (amount or description)');
+    }
+
+    condition.proposedAmount = (dto.amount ?? null) as any;
+    condition.proposedDescription = (dto.description ?? null) as any;
+    condition.proposedByUserId = userId;
+
+    await this.conditionRepository.save(condition);
+    return condition;
+  }
+
+  async acceptMilestoneChange(
+    escrowId: string,
+    conditionId: string,
+    userId: string,
+  ): Promise<Condition> {
+    const escrow = await this.escrowRepository.findOne({
+      where: { id: escrowId },
+      relations: ['conditions', 'parties'],
+    });
+
+    if (!escrow) throw new NotFoundException('Escrow not found');
+    
+    if (escrow.status !== EscrowStatus.ACTIVE) {
+      throw new BadRequestException('Milestones can only be changed when the escrow is ACTIVE');
+    }
+
+    const isBuyer = escrow.creatorId === userId || escrow.parties.some(p => p.userId === userId && p.role === PartyRole.BUYER);
+    const isSeller = escrow.parties.some(p => p.userId === userId && p.role === PartyRole.SELLER);
+    if (!isBuyer && !isSeller) {
+      throw new ForbiddenException('Only the buyer or seller can accept milestone changes');
+    }
+
+    const condition = escrow.conditions.find((c) => c.id === conditionId);
+    if (!condition) throw new NotFoundException('Condition not found');
+
+    if (!condition.proposedByUserId) {
+      throw new BadRequestException('No pending proposal for this milestone');
+    }
+
+    if (condition.proposedByUserId === userId) {
+      throw new ForbiddenException('You cannot accept your own proposed changes');
+    }
+
+    if (condition.proposedAmount !== null && condition.proposedAmount !== undefined) {
+      condition.amount = condition.proposedAmount;
+    }
+    if (condition.proposedDescription) {
+      condition.description = condition.proposedDescription;
+    }
+
+    condition.proposedAmount = null as any;
+    condition.proposedDescription = null as any;
+    condition.proposedByUserId = null as any;
+
+    await this.conditionRepository.save(condition);
+    return condition;
   }
 
   private async logEvent(
