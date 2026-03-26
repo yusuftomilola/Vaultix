@@ -1,30 +1,30 @@
-import { Linter } from "eslint";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import prettier from "eslint-plugin-prettier";
 
-/** @type {Linter.FlatConfig[]} */
+/** @type {import("eslint").Linter.FlatConfig[]} */
 const config = [
   {
+    ignores: [
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/dist/**",
+      "**/build/**",
+    ],
+  },
+  {
     languageOptions: {
-      parser: "@typescript-eslint/parser",
+      parser: tsParser,
       ecmaVersion: 2020,
       sourceType: "module",
     },
-    env: {
-      browser: true,
-      node: true,
-      es6: true,
-    },
     plugins: {
-      "@typescript-eslint": require("@typescript-eslint/eslint-plugin"),
-      prettier: require("eslint-plugin-prettier"),
+      "@typescript-eslint": tseslint,
+      prettier,
     },
     rules: {
-      // Add your custom rules here
+      "prettier/prettier": "error",
     },
-    extends: [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:prettier/recommended",
-    ],
   },
 ];
 
