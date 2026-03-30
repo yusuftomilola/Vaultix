@@ -3,11 +3,8 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
-<<<<<<< feature/milestone-changes
   OnModuleDestroy,
-=======
   UnprocessableEntityException,
->>>>>>> main
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -22,12 +19,9 @@ import axios from 'axios';
 @Injectable()
 export class WebhookService implements OnModuleDestroy {
   private readonly logger = new Logger(WebhookService.name);
-<<<<<<< feature/milestone-changes
   private timeouts: Map<string, NodeJS.Timeout> = new Map();
-=======
   private readonly MAX_WEBHOOKS_PER_USER = 10;
   private readonly MAX_EVENTS_PER_WEBHOOK = 8;
->>>>>>> main
 
   constructor(
     @InjectRepository(Webhook)
